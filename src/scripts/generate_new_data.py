@@ -18,14 +18,14 @@ def target_format_value(value, value_length, reverse_digits):
         value_digits_str.reverse()
     return " ".join(value_digits_str)
 
-def generate_input(int_a,int_b,reverse_digits=False):
+def generate_input(int_a,int_b,reverse_digits):
     length_a = len(str(int_a))
     length_b = len(str(int_b))
     assert length_a == length_b
     result = f"{target_format_value(int_a,length_a,reverse_digits)} * {target_format_value(int_b,length_b,reverse_digits)}"
     return result
 
-def generate_readable_chain_of_thought(int_a, int_b, reverse_digits=False):
+def generate_readable_chain_of_thought(int_a, int_b, reverse_digits):
     digits_a = [int(d) for d in str(int_a)]
     len_digits_a = len(digits_a)
     digits_b = [int(d) for d in str(int_b)]
@@ -55,7 +55,7 @@ def generate_readable_chain_of_thought(int_a, int_b, reverse_digits=False):
             target_chain_of_thought += f" + {str(target_format_value(add_value,len_digits_a+(len_digits_b-i),reverse_digits))} ( {target_format_value(current_sum,len_digits_a+(len_digits_b-i),reverse_digits)} )"
     return target_chain_of_thought
 
-def generate_result(int_a, int_b, reverse_digits=False):
+def generate_result(int_a, int_b, reverse_digits):
     int_result = int_a * int_b
     digits_a = [int(d) for d in str(int_a)]
     len_digits_a = len(digits_a)
@@ -64,12 +64,29 @@ def generate_result(int_a, int_b, reverse_digits=False):
     string_result = target_format_value(int_result, len_digits_a+len_digits_b , reverse_digits)
     return string_result
 
-def generate_line(int_a, int_b, reverse_digits=False):
-    multiplcation_expression = generate_input(int_a, int_b, reverse_digits)
-    chain_of_thought = generate_readable_chain_of_thought(int_a, int_b, reverse_digits)
-    result = generate_result(int_a, int_b, reverse_digits)
-    line = f"{multiplcation_expression}||{chain_of_thought} #### {result}"
+def generate_line(int_a_list, int_b_list, reverse_digits, expression_number=1):
+    multiplcation_expression_list = []
+    chain_of_thought_list = []
+    result_list = []
+    if isinstance(int_a_list,int):
+        int_a_list = [int_a_list]
+    if isinstance(int_b_list,int):
+        int_b_list = [int_b_list]
+    assert len(int_a_list) == len(int_b_list)
+    
+    for i in range(expression_number):
+        multiplcation_expression = generate_input(int_a_list[i], int_b_list[i], reverse_digits)
+        multiplcation_expression_list.append(multiplcation_expression)
+        chain_of_thought = generate_readable_chain_of_thought(int_a_list[i], int_b_list[i], reverse_digits)
+        chain_of_thought_list.append(chain_of_thought)
+        result = generate_result(int_a_list[i], int_b_list[i], reverse_digits)
+        result_list.append(result)
+    final_multiplcation_expression = ", ".join(multiplcation_expression_list)
+    final_chain_of_thought = ", ".join(chain_of_thought_list)
+    final_result = ", ".join(result_list)
+    line = f"{final_multiplcation_expression}||{final_chain_of_thought} #### {final_result}"
     return line
+
 
 def generate_data(
     digit_number_A: int,
@@ -81,11 +98,11 @@ def generate_data(
     lines = []
     random_seed = random.randint(0, 999999999)
     logging.basicConfig(level=logging.INFO)
-    logging.info("random seed: {}".format(random_seed))
+    # logging.info("random seed: {}".format(random_seed))
     for i in range(dataset_size):
-        int_a = random.randint(1000, 9999)
-        int_b = random.randint(1000, 9999)
-        line = generate_line(int_a, int_b, reverse_digits)
+        int_a_list = [random.randint(10**(digit_number_A-1), 10**(digit_number_A)-1) for _ in range(expression_number)]
+        int_b_list = [random.randint(10**(digit_number_B-1), 10**(digit_number_B)-1) for _ in range(expression_number)]
+        line = generate_line(int_a_list, int_b_list, reverse_digits,expression_number)
         lines.append(line)
     return lines
 
