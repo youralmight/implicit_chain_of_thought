@@ -105,7 +105,15 @@ def main():
     # Create Student
     config = StudentConfig(base_model=args.base_model)
     student = Student(config).to(device).to(ptdtype)
+    last_epoch = None
+    for ckpt_id in [*reversed([*range(5)])]:
+        ckpt_dir = os.path.join(f"{args.save_model}",f"checkpoint_{ckpt_id}")
+        if os.path.exists(ckpt_dir):
+            last_epoch = ckpt_id
+            break 
+    student = Student.from_pretrained(ckpt_dir).to(device).to(ptdtype)
 
+    print(f"Loaded emulator config and weights from {ckpt_dir}")
     # Load Teacher
     teacher = Teacher.from_pretrained(args.teacher).to(device).to(ptdtype)
 
@@ -131,7 +139,12 @@ def main():
 
     # Train
     step = 0
-    for epoch in range(args.epochs):
+    # for epoch in range(args.epochs):
+    epoch = last_epoch if last_epoch is not None else -1
+    while True:
+        epoch+=1
+        if epoch >= args.epochs:
+            break
         print(f"Epoch {epoch}")
 
         for batch in tqdm.tqdm(train_dataloader):
