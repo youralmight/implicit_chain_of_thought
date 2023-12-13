@@ -88,8 +88,9 @@ def main():
         if os.path.exists(ckpt_dir):
             last_epoch = ckpt_id
             break 
-    emulator = Emulator.from_pretrained(ckpt_dir).to(device).to(ptdtype)
-    print(f"Loaded emulator config and weights from {ckpt_dir}")
+    if last_epoch is not None:
+        emulator = Emulator.from_pretrained(ckpt_dir).to(device).to(ptdtype)
+        print(f"Loaded emulator config and weights from {ckpt_dir}")
     # Load Teacher
     teacher = Teacher.from_pretrained(args.teacher).to(device).to(ptdtype)
 
