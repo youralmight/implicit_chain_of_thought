@@ -77,20 +77,6 @@ class Teacher(nn.Module):
                 positions_to_extract = positions_to_extract.clamp(
                     max=last_position_to_extract
                 )
-            # elif subset == "diagnoal_double":
-            #     start_id_0 = first_position_to_extract
-            #     last_id_1=last_position_to_extract-2
-            #     comma_id = (first_position_to_extract+last_position_to_extract-2)//2
-            #     last_id_0 = comma_id-1
-            #     start_id_1 = comma_id+1
-            #     positions_to_extract=torch.zeros_like(layer_ids)
-            #     increments = (last_id_0-start_id_0)/(layer_ids.shape[0]//2-1)*(layer_ids[0:layer_ids.shape[0]//2])
-            #     positions_to_extract[0:layer_ids.shape[0]//2] =increments+start_id_0
-            #     positions_to_extract[layer_ids.shape[0]//2:] = increments+start_id_1
-            #     for i in range(0,layer_ids.shape[0]//2):
-            #         if i%2==1:
-            #             positions_to_extract[i],positions_to_extract[i+layer_ids.shape[0]//2]=positions_to_extract[i+layer_ids.shape[0]//2],positions_to_extract[i]
-            #     pass
             else:
                 raise NotImplementedError(subset)
 
