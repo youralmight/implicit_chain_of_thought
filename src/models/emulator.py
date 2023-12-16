@@ -67,7 +67,7 @@ class Emulator(nn.Module):
             query_proj=self.query_proj,
             out_proj=self.out_proj,
         )
-        if "PRINT_ICOT" in os.environ:
+        if "EMULATOR_BEAM_SIZE" in os.environ and "PRINT_ICOT" in os.environ:
             print(f"\nICOT: {' '.join(self.tokenizer.convert_ids_to_tokens (outputs.beam_search_states[0]['token_id_list'][0]))}")
         emulated_teacher_states = outputs.f_h_cs
         return emulated_teacher_states
