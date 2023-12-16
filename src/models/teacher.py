@@ -156,16 +156,28 @@ class Teacher(nn.Module):
                     increment = torch.round((last_id_0-start_id_0)/((L-2)-1)*(i-1)).long()
                     mat_0_pos = increment+start_id_0
                     mat_1_pos = increment+start_id_1
-                    if i%2==1:
+                    if "DIAGONAL_DOUBLE_VARIANT_SUM" in os.environ:
                         used_token_indexes.append(mat_0_pos)
-                    else:
                         used_token_indexes.append(mat_1_pos)
+                    elif "DIAGONAL_DOUBLE_VARIANT_DIM_CONCAT" in os.environ:
+                        used_token_indexes.append(mat_0_pos)
+                        used_token_indexes.append(mat_1_pos)
+                    else:
+                        if i%2==1:
+                            used_token_indexes.append(mat_0_pos)
+                        else:
+                            used_token_indexes.append(mat_1_pos)
                 z = None
                 for used_token_index in used_token_indexes:
                     if z==None:
                         z = hidden_state[:,used_token_index,:]
                     else:
-                        z = z+hidden_state[:,used_token_index,:]
+                        if "DIAGONAL_DOUBLE_VARIANT_SUM" in os.environ:
+                            z = z+hidden_state[:,used_token_index,:]
+                        elif "DIAGONAL_DOUBLE_VARIANT_DIM_CONCAT" in os.environ:
+                            z[:,C//2:]=hidden_state[:,used_token_index,C//2:]
+                        else:
+                            pass
 
             else:
                 assert subset == "bottom_row", subset
