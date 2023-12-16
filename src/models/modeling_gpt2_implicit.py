@@ -487,8 +487,8 @@ class GPT2ImplicitModel(GPT2Model):
                             softmax_temperature=softmax_temperature,
                             requires_backward=requires_backward,
                         )
-                        if beam_id == 0:
-                            print(f"{bss['accu_prob_indices'][0][0]}, ", end="")
+                        # if beam_id == 0:
+                        #     print(f"{bss['accu_prob_indices'][0][0]}, ", end="")
                         beam_search_states[beam_id] = bss
                     all_accu_prob_values = [
                         list(
