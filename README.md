@@ -1,11 +1,11 @@
-# Solution for the [Challenge](https://yuntiandeng.com/cv/challenge.png) proposed by Prof. Deng
+# Solution for the [Challenge](https://yuntiandeng.com/cv/challenge.png)
 
 ## Basic
 ### Understanding
 There are several possible approaches to implementing a solution for this challenge. Two of the methods that have been considered are splitting the embedding dimensions for the hidden states of both problems and using attention masks to control the attention across the problems.
 
 However, these two methods have been excluded for the following reasons:
-1. Dividing the embedding dimensions contradicts the nature of the base language model, GPT2, and prevents it from fully leveraging the knowledge it has acquired, resulting in suboptimal performance.
+1. Dividing the embedding dimensions contradicts the nature of the base language model, `GPT2`, and prevents it from fully leveraging the knowledge it has acquired, resulting in suboptimal performance.
 2. Utilizing attention masks involves using two `<eos>` tokens for generation and attention masks to separate the two problems. However, this approach is essentially equivalent to treating the two multiplications as separate examples, effectively doubling the batch size. Moreover, it consumes additional computational resources and memory.
 
 ### Method
@@ -17,11 +17,18 @@ The solution involves processing a concatenated sequence of the two problems and
 The basic task is accomplished through the following three steps:
 1. Creation of the double 2x2 multiplication dataset. The code for this step can be found at `src/scripts/generate_new_data.py`.
 2. Modification of the distribution of extracted teacher minds.
-3. Fine-tuning of GPT2 on the new dataset with the revised distribution. The results and analysis of this step will be discussed in the following section.
+3. Fine-tuning of `GPT2` on the new dataset with the revised distribution. The results and analysis of this step will be discussed in the following section.
 
 Furthermore, two variants have been designed, which involve adding the two hidden states or concatenating half of the embedding dimensions from the two hidden states. The extraction of teacher minds in these variants is illustrated in the provided figures.
 ![](https://youralmight-hk-personal-oss.oss-cn-hongkong.aliyuncs.com/image/20231217171334.png)
 ![](https://youralmight-hk-personal-oss.oss-cn-hongkong.aliyuncs.com/image/20231217175421.png)
+
+### Usage
+
+To reason two problems simultaneously, add `--subset diagnoal_double` to the command line. The command line for inference is as follows:
+```
+python src/generate.py --batch_size 32 --test_path data/2_by_2_mult_double/test_bigbench.txt --student_path train_models/2_by_2_mult_double/gpt2/student/checkpoint_0 --emulator_path train_models/2_by_2_mult_double/gpt2/emulator/checkpoint_0 --subset diagnoal_double
+```
 ### Result and Analysis
 The table below presents the raw results of the three extraction methods. The training epochs "3, 4, 6, 1" indicate the number of epochs for training the teacher, student, teacher, and student, respectively.
 | Method\Epochs | 3, 4, 6, 1 | 3, 2, 3, 1 |
@@ -34,7 +41,7 @@ It is evident that these models perform exceptionally well on the double 2x2 tas
 
 Furthermore, the "Sum" method outperforms the other two methods, exhibiting 100% accuracy for both training epochs settings. This superior performance can be attributed to the "Sum" method's ability to effectively combine the teacher minds from the two different CoTs.
 
-The performance of all three methods is quite close. However, it is important to note that 2 x 2 multiplication is a relatively simple task for a GPT2 model, which may explain the similar performance across the methods.
+The performance of all three methods is quite close. However, it is important to note that 2 x 2 multiplication is a relatively simple task for a `GPT2` model, which may explain the similar performance across the methods.
 
 Additionally, the "Alternative" method, while performing slightly worse than the "Sum" methods, exhibits faster convergence during the initial emulator training and initial student training phases. This suggests that it may perform better on more complex tasks.
 
@@ -47,6 +54,15 @@ Regarding the three steps in the inference process, it seems impossible to perfo
 In thought emulation, the model uses the mixture model, which is included in the emulator technically, to process the "Mind token" between the transformer layers of the language model. In this mixing process, one of the mixing components is chosen and fused with the intermediate hidden states. Because there exists the decision of choosing the best component, beam search can be applied to it.
 ### Method
 Because the mixture of components is designed for "Multi Reasoning Pathways" tasks, I only applied beam search to the `GSM8K` dataset and didn't apply it to the multiplication datasets. The emulation of beam search between the transformer layers is implemented in the commit `f31bae`. I will provide the results and analysis in the next section. Specifically, I select the beams with the highest accumulated log probabilities of the component paths and pass them to the next transformer layer. In the mixture process, I embed the component one-hot vectors and fuse them with the hidden states separately using an MLP, as stated in the paper. Furthermore, I kept the batching during inference to maintain parallelism and inference speed.
+
+### Usage
+To enable beam search, set "EMULATOR_BEAM_SIZE" in environment variables. The command line for inference is as follows:
+```
+export EMULATOR_BEAM_SIZE=5
+#export BEAM_SEARCH_SOFTMAX_TEMPERATURE=1
+#export PRINT_ICOT=true
+python src/generate.py --batch_size 1 --test_path data/gsm8k/test.txt --student_path models/gsm8k/gpt2/student --emulator_path models/gsm8k/gpt2/emulator
+```
 ### Results and Analysis
 Despite implementing beam search, the performance of the model did not show clear improvement. I grid-searched on beam width and softmax temperature, to find the performance stable. 
 
