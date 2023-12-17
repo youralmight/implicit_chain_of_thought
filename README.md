@@ -80,7 +80,7 @@ beam size: 1, softmax temperature: 0.05 (default)
 <|endoftext|> / 560 Ġ250 ĠFlood 750 + Ġingestion ĠRaiders Ġbadges Ġdelinquent ĠSail
 <|endoftext|> / 560 Ġ250 ĠFlood 750 + = oling arian <|endoftext|> .;
 <|endoftext|> / 560 Ġ250 ĠFlood 750 + = ĠRaiders Ġbadges Ġdelinquent paper
-beam size: 5, softmax temperature: 0.05 (default)
+beam size: 5, softmax temperature: 0.05
 <|endoftext|> / 560 Ġ250 ĠFlood 750 - = FactoryReloaded Ġballpark Vers Ġgrun
 <|endoftext|> / 560 ĠPentagon ĠFlood 750 * Ġingestion Ott ĠVI Ġediting .;
 <|endoftext|> / 560 Ġ250 ĠFlood 750 + Ġingestion ĠRaiders Ġbadges Ġdelinquent ĠSail
