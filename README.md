@@ -25,10 +25,7 @@ Furthermore, two variants have been designed, which involve adding the two hidde
 
 ### Usage
 
-To reason two problems simultaneously, add `--subset diagnoal_double` to the command line. The command line for inference is as follows:
-```
-python src/generate.py --batch_size 32 --test_path data/2_by_2_mult_double/test_bigbench.txt --student_path train_models/2_by_2_mult_double/gpt2/student/checkpoint_0 --emulator_path train_models/2_by_2_mult_double/gpt2/emulator/checkpoint_0 --subset diagnoal_double
-```
+Add `--subset diagnoal_double` to the command line at emulator training and use the same commands for other steps as the original code.
 ### Result and Analysis
 The table below presents the raw results of the three extraction methods. The training epochs "3, 4, 6, 1" indicate the number of epochs for training the teacher, student, teacher, and student, respectively.
 | Method\Epochs | 3, 4, 6, 1 | 3, 2, 3, 1 |
