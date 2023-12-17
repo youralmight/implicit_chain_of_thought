@@ -671,9 +671,8 @@ class GPT2ImplicitModel(GPT2Model):
                     ]
                 else:
                     for batch_id in range(batch_size):
-                        hidden_states[
-                            batch_id, positions_to_substitut[batch_id]
-                        ] = states_to_substitute[i][batch_id]
+                        hidden_states[batch_id, positions_to_substitute[batch_id]] = states_to_substitute[i][batch_id]
+
 
             if self.gradient_checkpointing and self.training:
                 if mode == "forward_emulator" and "EMULATOR_BEAM_SIZE" in os.environ:
