@@ -101,6 +101,14 @@ def main():
     # Create Student 
     config = TeacherConfig(base_model=args.base_model)
     teacher = Teacher(config).to(device).to(ptdtype)
+    last_epoch = None
+    for ckpt_id in [*reversed([*range(5)])]:
+        ckpt_dir = os.path.join(f"{args.save_model}",f"checkpoint_{ckpt_id}")
+        if os.path.exists(ckpt_dir):
+            last_epoch = ckpt_id
+            break 
+    if last_epoch is not None:
+        teacher = Teacher.from_pretrained(ckpt_dir).to(device).to(ptdtype)
 
     # Load data
     tokenizer = teacher.tokenizer
@@ -120,7 +128,14 @@ def main():
 
     # Train
     step = 0
-    for epoch in range(args.epochs):
+    # for epoch in range(args.epochs):
+    epoch = last_epoch if last_epoch is not None else -1
+    while True:
+        epoch+=1
+        if epoch >= args.epochs:
+            accuracy, token_accuracy, ppl = evaluate(val_dataloader, tokenizer, ctx, teacher, args.max_new_tokens)
+            print (f'Val. PPL: {ppl}; Accuracy: {accuracy}; Token Accuracy: {token_accuracy}.')
+            break
         print(f"Epoch {epoch}")
         teacher.train()
         for batch in tqdm.tqdm(train_dataloader):
