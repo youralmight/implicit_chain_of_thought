@@ -1,3 +1,4 @@
+import time
 import math
 import torch
 from torch.utils.data import DataLoader
@@ -17,8 +18,8 @@ from utils import get_sep_position
 
 torch.backends.cuda.matmul.allow_tf32 = True
 torch.backends.cudnn.allow_tf32 = True
-random.seed(1234)
-torch.manual_seed(1234)
+random.seed(int(time.time()))
+torch.manual_seed(int(time.time()))
 logging.disable(logging.WARNING) # disable WARNING, INFO and DEBUG logging everywhere
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
