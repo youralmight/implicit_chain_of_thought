@@ -1,3 +1,4 @@
+import os
 import argparse
 import random
 import logging
@@ -8,6 +9,13 @@ import logging
 
 
 def target_format_value(value, value_length, reverse_digits):
+    '''
+    value: the integer value to be formatted
+    value_length: the length of the formatted value
+    reverse_digits: whether to reverse the digits of the value
+
+    example: target_format_value(123,5,True) -> "3 2 1 0 0"
+    '''
     value_digits_str = [d for d in str(value)]
     if reverse_digits:
         value_digits_str.reverse()
@@ -19,6 +27,13 @@ def target_format_value(value, value_length, reverse_digits):
     return " ".join(value_digits_str)
 
 def generate_input(int_a,int_b,reverse_digits):
+    '''
+    int_a: the first integer
+    int_b: the second integer
+    reverse_digits: whether to reverse the digits of the value
+
+    example: generate_input(123,456,True) -> "3 2 1 0 0 * 6 5 4 0 0"
+    '''
     length_a = len(str(int_a))
     length_b = len(str(int_b))
     assert length_a == length_b
@@ -65,7 +80,7 @@ def generate_result(int_a, int_b, reverse_digits):
     return string_result
 
 def generate_line(int_a_list, int_b_list, reverse_digits, expression_number=1):
-    multiplcation_expression_list = []
+    multiplication_expression_list = []
     chain_of_thought_list = []
     result_list = []
     if isinstance(int_a_list,int):
@@ -75,16 +90,16 @@ def generate_line(int_a_list, int_b_list, reverse_digits, expression_number=1):
     assert len(int_a_list) == len(int_b_list)
     
     for i in range(expression_number):
-        multiplcation_expression = generate_input(int_a_list[i], int_b_list[i], reverse_digits)
-        multiplcation_expression_list.append(multiplcation_expression)
+        multiplication_expression = generate_input(int_a_list[i], int_b_list[i], reverse_digits)
+        multiplication_expression_list.append(multiplication_expression)
         chain_of_thought = generate_readable_chain_of_thought(int_a_list[i], int_b_list[i], reverse_digits)
         chain_of_thought_list.append(chain_of_thought)
         result = generate_result(int_a_list[i], int_b_list[i], reverse_digits)
         result_list.append(result)
-    final_multiplcation_expression = ", ".join(multiplcation_expression_list)
+    final_multiplication_expression = ", ".join(multiplication_expression_list)
     final_chain_of_thought = ", ".join(chain_of_thought_list)
     final_result = ", ".join(result_list)
-    line = f"{final_multiplcation_expression}||{final_chain_of_thought} #### {final_result}"
+    line = f"{final_multiplication_expression}||{final_chain_of_thought} #### {final_result}"
     return line
 
 
@@ -94,16 +109,33 @@ def generate_data(
     expression_number: int,
     dataset_size: int,
     reverse_digits: bool,
+    excluded_file_path_list: str = None,
 ):
+    excluded_lines = []
+    for excluded_file_path in excluded_file_path_list:
+        print(f"reading {excluded_file_path}")
+        with open(excluded_file_path, "r") as f:
+            excluded_lines.extend(f.read().split("\n"))
+            if excluded_lines[-1] == "":
+                excluded_lines.pop()
+    logging.debug("excluded_lines: {}".format(excluded_lines))
+
     lines = []
     random_seed = random.randint(0, 999999999)
-    logging.basicConfig(level=logging.INFO)
-    # logging.info("random seed: {}".format(random_seed))
+    logging.info("random seed: {}".format(random_seed))
+    random.seed(random_seed)
     for i in range(dataset_size):
-        int_a_list = [random.randint(10**(digit_number_A-1), 10**(digit_number_A)-1) for _ in range(expression_number)]
-        int_b_list = [random.randint(10**(digit_number_B-1), 10**(digit_number_B)-1) for _ in range(expression_number)]
-        line = generate_line(int_a_list, int_b_list, reverse_digits,expression_number)
-        lines.append(line)
+        accepted: bool = False
+        while not accepted:
+            int_a_list = [random.randint(10**(digit_number_A-1), 10**(digit_number_A)-1) for _ in range(expression_number)]
+            int_b_list = [random.randint(10**(digit_number_B-1), 10**(digit_number_B)-1) for _ in range(expression_number)]
+            line = generate_line(int_a_list, int_b_list, reverse_digits,expression_number)
+            if line not in excluded_lines:
+                accepted = True
+            else:
+                pass
+                logging.warning("rejected: {}".format(line))
+            lines.append(line)
     return lines
 
 def build_parser():
@@ -129,11 +161,17 @@ def build_parser():
     parser.add_argument(
         "-p","--print",action="store_true",help="print to stdout",default=False
     )
+    parser.add_argument(
+        "-e","--excluded",help="excluded file path list",default=[], type = str,nargs="*"
+    )
     return parser
 
 
 def main(args=None):
     args = args or build_parser().parse_args()
+    if isinstance(args.excluded,str):
+        args.excluded = [args.excluded]
+    print(args)
     if not args.output and not args.print:
         raise ValueError("Either --output or --print must be set")
     generated_data_list = generate_data(
@@ -142,6 +180,7 @@ def main(args=None):
         args.expression_number,
         args.dataset_size,
         args.reverse_digits,
+        args.excluded
     )
     if args.print:
         for line in generated_data_list:
@@ -155,5 +194,8 @@ def main(args=None):
 
 
 if __name__ == "__main__":
+    
+    logging.basicConfig(level=getattr(logging,os.getenv("LOG_LEVEL", "INFO").upper()))
+    # print(f"log level is {loggi}")
     assert generate_line(5431,3918,1) == "1 3 4 5 * 8 1 9 3||8 4 4 3 4 + 0 1 3 4 5 0 ( 8 5 7 7 9 0 ) + 0 0 9 7 8 8 4 ( 8 5 6 5 8 9 4 ) + 0 0 0 3 9 2 6 1 #### 8 5 6 8 7 2 1 2"
     main()
