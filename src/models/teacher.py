@@ -107,7 +107,7 @@ class Teacher(nn.Module):
         hidden_states = outputs.hidden_states[:-1]
 
         # Compute the positions to extract teacher states (t_l in the paper)
-        if subset != "diagnoal_double":
+        if subset != "diagonal_double":
             positions_to_extract_per_layer = (
                 self.compute_positions_to_extract_per_layer(
                     subset, delta, first_sep_positions, second_sep_positions
@@ -142,7 +142,7 @@ class Teacher(nn.Module):
                     )
                     .squeeze(1)
                 )
-            elif subset == "diagnoal_double":
+            elif subset == "diagonal_double":
                 last_id_0 = comma_positions[0] - 1
                 start_id_1 = comma_positions[0] + 1
                 start_id_0 = first_sep_positions[0] + 1

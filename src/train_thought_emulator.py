@@ -63,7 +63,7 @@ def main():
     parser.add_argument(
         "--subset",
         type=str,
-        choices=["diagonal", "last_column", "top_row", "bottom_row", "first_column","diagnoal_double"],
+        choices=["diagonal", "last_column", "top_row", "bottom_row", "first_column","diagonal_double"],
         default="diagonal",
     )
     parser.add_argument("--mixture_size", type=int, default=1)

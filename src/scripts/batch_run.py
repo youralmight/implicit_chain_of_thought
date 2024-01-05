@@ -2,31 +2,33 @@ import os,argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--exp', type=str, required=True)
 args = parser.parse_args()
-epochs = [1,5,10,30]
-duplicants = [1,2,3,4,5]
-exps = ["vanilla","diagnoal_double","concat","sum"]
+# epochs = [1,5,10,30]
+epochs=[50]
+# dups = [1,2,3,4,5]
+dups=[1]
+exps = ["vanilla","diagonal_double","concat","sum"]
 '''
-python run_all.py --exp vanilla & ; python run_all.py --exp diagnoal_double & ; python run_all.py --exp concat & ; python run_all.py --exp sum & ; wait
+python run_all.py --exp vanilla & ; python run_all.py --exp diagonal_double & ; python run_all.py --exp concat & ; python run_all.py --exp sum & ; wait
 '''
 
 exp_command_0_dict= {
     "vanilla":"echo vanilla",
-    "diagnoal_double":"echo diagnoal_double",
+    "diagonal_double":"echo diagonal_double",
     "concat":"set -xg DIAGONAL_DOUBLE_VARIANT_CONCAT concat",
     "sum":"set -xg DIAGONAL_DOUBLE_VARIANT_SUM sum",
 }
 
 exp_command_1_dict= {
     "vanilla":"diagonal",
-    "diagnoal_double":"diagnoal_double",
-    "concat":"diagnoal_double",
-    "sum":"diagnoal_double",
+    "diagonal_double":"diagonal_double",
+    "concat":"diagonal_double",
+    "sum":"diagonal_double",
 }
 exp_id = exps.index(args.exp)
 commands = []
 for epoch in epochs:
-    for duplicant in duplicants:
-        exp_str = f"2_by_2_mult_double_10k_py_{args.exp}_exp{duplicant}_epochs{epoch}"
+    for dup in dups:
+        exp_str = f"2_by_2_mult_double_10k_py_{args.exp}_exp{dup}_epochs{epoch}"
         data_str = f"2_by_2_mult_double_10k"
         command = " \n " .join([
             f"cd /workspaces/implicit_chain_of_thought",
