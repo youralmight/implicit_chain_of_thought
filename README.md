@@ -15,19 +15,18 @@ Finally, I chose to retain the paradigm of the original Implicit Chain of Though
 
 ![](https://youralmight-hk-personal-oss.oss-cn-hongkong.aliyuncs.com/image/challenge.png)
 
-The solution involves processing a concatenated sequence of the two problems and generating the answers sequentially. However, it extracts the teacher minds alternately from the CoT hidden states of two diagonals. The extracted minds are illustrated in the figure provided. The first `<eos>` token in the first layer and the second `<eos>` token in the last layer are selected as the hidden states. Additionally, the hidden states from the two diagonals of the CoT for Multiplication 1 (M1) and Multiplication 2 (M2) are chosen alternately. Although candidate states are not extracted, they are shown in the figure for readers to better see the diagonal.
+The solution involves processing a concatenated sequence of the two problems and generating the answers sequentially. However, it extracts the teacher's minds alternately from the CoT hidden states of two diagonals. The extracted minds are illustrated in the provided figure. The first `<eos>` token in the first layer and the second `<eos>` token in the last layer are selected as the hidden states. Additionally, the hidden states from the two diagonals of the CoT for Multiplication 1 (M1) and Multiplication 2 (M2) are chosen alternately. Although candidate states are not extracted, they are shown in the figure for readers to better see the diagonal.
 
 #### Concatenate
 ![](https://youralmight-hk-personal-oss.oss-cn-hongkong.aliyuncs.com/image/20231217175421.png)
 
-This variant is designed to recept the diagonal states of both multiplication CoTs.
-In every layer except the first and last layers, first half of dimensions of M1 and second half of dimensions of M2 are concatenated and extracted as teachers minds.
+This variant is designed to receive the diagonal states of both multiplication CoTs. In every layer except the first and last layers, the first half of the dimensions of M1 and the second half of the dimensions of M2 are concatenated and extracted as teacher's minds.
 
 #### Sum
 
 ![](https://youralmight-hk-personal-oss.oss-cn-hongkong.aliyuncs.com/image/20231217171334.png)
 
-A simple but effective multi-modal fusion method is to sum the features two modalities. This method sums up the two diagonals of the two CoTs, so that the model remember the reasoning process of both problems.
+A simple but effective multi-modal fusion method is to sum the features of two modalities. This method sums up the two diagonals of the two CoTs, so that the model remember the reasoning process of both problems.
 
 
 
@@ -43,20 +42,19 @@ A simple but effective multi-modal fusion method is to sum the features two moda
 
 ### Experiment
 The basic task is accomplished through the following three steps:
-1. Creation of the double 2x2 multiplication dataset. Because the train set size in the paper is too big for $ 2 2\mul2 $ multiplications, I also generated a smaller dataset with 10k examples for train, and 2k for validation and test. The code for this step can be found at `src/scripts/generate_new_data_small.py`.
+1. Creation of the double 2x2 multiplication dataset. Because the train set size in the paper is too big for two $ 2 \times 2 $ multiplications, I also generated a smaller dataset with 10k examples for train set, and 2k for validation and test. The code for this step can be found at `src/scripts/generate_new_data_small.py`.
 2. Modification of the distribution of extracted teacher minds.
-3. Fine-tuning of `GPT2` on the new dataset with the revised distribution. Besides the above methods, an experiment in which no modification is made to the distribution of extracted teacher minds is also conducted for comparison. Although it does not reason simultaneously, it is the more compatible to the transformer architecture and expected to perform better than the above methods.
+3. Fine-tuning of `GPT2` on the new dataset with the revised distribution. Besides the above methods, an experiment in which no modification is made to the distribution of extracted teacher minds is also conducted for comparison. Although it does not reason simultaneously, it is more compatible with the transformer architecture and expected to perform better than the above methods.
 
 
 ### Usage
 
-Add `--subset diagonal_double` to the command line at emulator training 
-and use the same commands for other steps as the original code, and set `DIAGONAL_DOUBLE_VARIANT_CONCAT` or `DIAGONAL_DOUBLE_VARIANT_SUM` in environment variables to choose the variant.
+Add `--subset diagonal_double` to the command line at emulator training and use the same commands for other steps as the original code, and set `DIAGONAL_DOUBLE_VARIANT_CONCAT` or `DIAGONAL_DOUBLE_VARIANT_SUM` in environment variables to choose the variant.
 
 ### Result and Analysis
 
 #### 800k train samples
-The table below presents Accuracy of the above methods trained with 800k train samples. The training epochs "3, 4, 6, 1" indicate the number of epochs for training the teacher, student, teacher, and student, respectively.
+The table below presents the accuracy of the above methods trained with 800k train samples. The training epochs "3, 4, 6, 1" indicate the number of epochs for training the teacher, student, teacher, and student, respectively.
 | Method\Epochs | 3, 4, 6, 1 | 3, 2, 3, 1 |
 | ------------- | ---------- | ---------- |
 | Vanilla       | 1.0        | 1.0        |
@@ -64,19 +62,25 @@ The table below presents Accuracy of the above methods trained with 800k train s
 | Concatenate    | 99.7%      | 98.3%      |
 | Alternating   | 97.9      | 99.8%      |
 
-Because their results are too close, I do not think we can give a conclusion that one method is better than the other.
+Because their results are too close, I do not think we can conclude that one method is better than the other.
 
 #### 10k train samples
-| Method\Epochs | 20 | TODO |
+
+| Method\Epochs | 20 |
+| ------------- | ---------- |
+| Vanilla       | 70.4%        |
+| Sum           | 63.1%        |
+| Concatenate    | 56.1%      |
+| Alternating   | 53.6%      |
+
+<!-- | Method\Epochs | 20 | TODO |
 | ------------- | ---------- | ---------- |
 | Vanilla       | 70.4%        | TODO        |
 | Sum           | 63.1%        | TODO        |
 | Concatenate    | 56.1%      | TODO      |
-| Alternating   | 53.6%      | TODO      |
+| Alternating   | 53.6%      | TODO      | -->
 
-When train set size scales to 10k, more training epochs are required to fine-tune a `GPT2` model, so I trained 20 epochs in all training stages.
-In case training is not stable and relies too much on randomness, I trained 4 times for each method and report the average accuracy. The results are shown in the table above.
-As expected, `Vanilla` performs the best and "Sum" follows, because the former is most compatible and natural for the transformer architecture. The `Sum` requires the model to remember the reasoning process of both problems, which is more difficult than the `Vanilla` method. The "Concatenate" destruct the natural dimension of the model, which is not expected to perform well. The "Alternating" method is the worst, because the alternating pattern is to hard for the model to learn.
+When the train set size scales to 10k, more training epochs are required to fine-tune a `GPT2` model. Therefore, I trained for 20 epochs in all training stages. In case the training is not stable and relies too much on randomness, I trained each method 4 times and report the average accuracy. The results are shown in the table above. As expected, `Vanilla` performs the best, and "Sum" follows because the former is most compatible and natural for the transformer architecture. The `Sum` requires the model to remember the reasoning process of both problems, which is more difficult than the `Vanilla` method. The "Concatenate" method disrupts the natural dimension of the model, which is not expected to perform well. The "Alternating" method is the worst because the alternating pattern is too hard for the model to learn."
 <!-- Furthermore, the "Sum" method outperforms the other two methods, exhibiting 100% accuracy for both training epochs settings. This superior performance can be attributed to the "Sum" method's ability to effectively combine the teacher minds from the two different CoTs.
 
 The performance of all three methods is quite close. However, it is important to note that 2 x 2 multiplication is a relatively simple task for a `GPT2` model, which may explain the similar performance across the methods.
