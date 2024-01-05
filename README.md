@@ -1,46 +1,87 @@
 # Solution for the [Challenge](https://yuntiandeng.com/cv/challenge.png)
 
 ## Basic
-### Understanding
-There are several possible approaches to implementing a solution for this challenge. Two of the methods that have been considered are splitting the embedding dimensions for the hidden states of both problems and using attention masks to control the attention across the problems.
+### Requirement
+There are several possible approaches to implementing a solution for reasoning simultaneously. Two of the methods that have been considered are splitting the embedding dimensions for the hidden states of both problems and using attention masks to control the attention across the problems.
 
-However, these two methods have been excluded for the following reasons:
+However, these two methods have been <b>excluded</b> for the following reasons:
 1. Dividing the embedding dimensions contradicts the nature of the base language model, `GPT2`, and prevents it from fully leveraging the knowledge it has acquired, resulting in suboptimal performance.
 2. Utilizing attention masks involves using two `<eos>` tokens for generation and attention masks to separate the two problems. However, this approach is essentially equivalent to treating the two multiplications as separate examples, effectively doubling the batch size. Moreover, it consumes additional computational resources and memory.
 
-### Method
-The chosen approach retains the paradigm of the original Implicit Chain of Thought (CoT) model but modifies the distribution of the extracted teacher minds within the teacher CoT hidden states.
+Finally, I chose to retain the paradigm of the original Implicit Chain of Thought (CoT) model but modifies the distribution of the extracted teacher minds within the teacher CoT hidden states, so that the model can do simultaneous reasoning "implicitly".
 
-The solution involves processing a concatenated sequence of the two problems and generating the answers sequentially. However, it extracts the teacher minds alternately from the CoT hidden states of two diagonals. The extracted minds are illustrated in the figure provided. The first `<eos>` token in the first layer and the second `<eos>` token in the last layer are selected as the hidden states. Additionally, the hidden states from the two diagonals of the CoT for Multiplication 1 (M1) and Multiplication 2 (M2) are chosen alternately.
+### Methods
+#### Alternating
+
 ![](https://youralmight-hk-personal-oss.oss-cn-hongkong.aliyuncs.com/image/challenge.png)
 
-The basic task is accomplished through the following three steps:
-1. Creation of the double 2x2 multiplication dataset. The code for this step can be found at `src/scripts/generate_new_data.py`.
-2. Modification of the distribution of extracted teacher minds.
-3. Fine-tuning of `GPT2` on the new dataset with the revised distribution. The results and analysis of this step will be discussed in the following section.
+The solution involves processing a concatenated sequence of the two problems and generating the answers sequentially. However, it extracts the teacher minds alternately from the CoT hidden states of two diagonals. The extracted minds are illustrated in the figure provided. The first `<eos>` token in the first layer and the second `<eos>` token in the last layer are selected as the hidden states. Additionally, the hidden states from the two diagonals of the CoT for Multiplication 1 (M1) and Multiplication 2 (M2) are chosen alternately. Although candidate states are not extracted, they are shown in the figure for readers to better see the diagonal.
 
-Furthermore, two variants have been designed, which involve adding the two hidden states or concatenating half of the embedding dimensions from the two hidden states. The extraction of teacher minds in these variants is illustrated in the provided figures.
-![](https://youralmight-hk-personal-oss.oss-cn-hongkong.aliyuncs.com/image/20231217171334.png)
+#### Concatenate
 ![](https://youralmight-hk-personal-oss.oss-cn-hongkong.aliyuncs.com/image/20231217175421.png)
+
+This variant is designed to recept the diagonal states of both multiplication CoTs.
+In every layer except the first and last layers, first half of dimensions of M1 and second half of dimensions of M2 are concatenated and extracted as teachers minds.
+
+#### Sum
+
+![](https://youralmight-hk-personal-oss.oss-cn-hongkong.aliyuncs.com/image/20231217171334.png)
+
+A simple but effective multi-modal fusion method is to sum the features two modalities. This method sums up the two diagonals of the two CoTs, so that the model remember the reasoning process of both problems.
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Experiment
+The basic task is accomplished through the following three steps:
+1. Creation of the double 2x2 multiplication dataset. Because the train set size in the paper is too big for $ 2 2\mul2 $ multiplications, I also generated a smaller dataset with 10k examples for train, and 2k for validation and test. The code for this step can be found at `src/scripts/generate_new_data_small.py`.
+2. Modification of the distribution of extracted teacher minds.
+3. Fine-tuning of `GPT2` on the new dataset with the revised distribution. Besides the above methods, an experiment in which no modification is made to the distribution of extracted teacher minds is also conducted for comparison. Although it does not reason simultaneously, it is the more compatible to the transformer architecture and expected to perform better than the above methods.
+
 
 ### Usage
 
-Add `--subset diagnoal_double` to the command line at emulator training and use the same commands for other steps as the original code.
+Add `--subset diagonal_double` to the command line at emulator training 
+and use the same commands for other steps as the original code, and set `DIAGONAL_DOUBLE_VARIANT_CONCAT` or `DIAGONAL_DOUBLE_VARIANT_SUM` in environment variables to choose the variant.
+
 ### Result and Analysis
-The table below presents the raw results of the three extraction methods. The training epochs "3, 4, 6, 1" indicate the number of epochs for training the teacher, student, teacher, and student, respectively.
+
+#### 800k train samples
+The table below presents Accuracy of the above methods trained with 800k train samples. The training epochs "3, 4, 6, 1" indicate the number of epochs for training the teacher, student, teacher, and student, respectively.
 | Method\Epochs | 3, 4, 6, 1 | 3, 2, 3, 1 |
 | ------------- | ---------- | ---------- |
-| Sum           | 1.0        | 1.0        |
-| Concatenate    | 0.997      | 0.983      |
-| Alternative   | 0.979      | 0.998      |
+| Vanilla       | 1.0        | 1.0        |
+| Sum           | 100%        | 100%        |
+| Concatenate    | 99.7%      | 98.3%      |
+| Alternating   | 97.9      | 99.8%      |
 
-It is evident that these models perform exceptionally well on the double 2x2 task, achieving an accuracy of approximately 100%.
+Because their results are too close, I do not think we can give a conclusion that one method is better than the other.
 
-Furthermore, the "Sum" method outperforms the other two methods, exhibiting 100% accuracy for both training epochs settings. This superior performance can be attributed to the "Sum" method's ability to effectively combine the teacher minds from the two different CoTs.
+#### 10k train samples
+| Method\Epochs | 20 | TODO |
+| ------------- | ---------- | ---------- |
+| Vanilla       | 70.4%        | TODO        |
+| Sum           | 63.1%        | TODO        |
+| Concatenate    | 56.1%      | TODO      |
+| Alternating   | 53.6%      | TODO      |
+
+When train set size scales to 10k, more training epochs are required to fine-tune a `GPT2` model, so I trained 20 epochs in all training stages.
+In case training is not stable and relies too much on randomness, I trained 4 times for each method and report the average accuracy. The results are shown in the table above.
+As expected, `Vanilla` performs the best and "Sum" follows, because the former is most compatible and natural for the transformer architecture. The `Sum` requires the model to remember the reasoning process of both problems, which is more difficult than the `Vanilla` method. The "Concatenate" destruct the natural dimension of the model, which is not expected to perform well. The "Alternating" method is the worst, because the alternating pattern is to hard for the model to learn.
+<!-- Furthermore, the "Sum" method outperforms the other two methods, exhibiting 100% accuracy for both training epochs settings. This superior performance can be attributed to the "Sum" method's ability to effectively combine the teacher minds from the two different CoTs.
 
 The performance of all three methods is quite close. However, it is important to note that 2 x 2 multiplication is a relatively simple task for a `GPT2` model, which may explain the similar performance across the methods.
 
-Additionally, the "Alternative" method, while performing slightly worse than the "Sum" methods, exhibits faster convergence during the initial emulator training and initial student training phases. This suggests that it may perform better on more complex tasks.
+Additionally, the "Alternating" method, while performing slightly worse than the "Sum" methods, exhibits faster convergence during the initial emulator training and initial student training phases. This suggests that it may perform better on more complex tasks. -->
 
 
 ## Advanced
@@ -71,7 +112,7 @@ Here are the detailed results:
 | 5                               | 0.20 | 0.20 | 0.20 | 0.20 | 0.20 |
 | 15                              | 0.20 | 0.20 | 0.20 | 0.20 | 0.20 |
 
-The results show that the performance of the model is not greatly affected by the softmax temperature and the beam size. I think the reason is that the decision of choosing the best component is not heavily influenced by the softmax temperature. To verify this idea, I printed the tokens of the best components in three different experiment settings. 
+The results show that the performance of the model is almost not affected by the softmax temperature and the beam size, degrading to greed search. I think the reason is that the decision of choosing the best component is "sure" and not heavily influenced by the softmax temperature. To verify this idea, I printed the tokens of the best components in three different experiment settings. 
 The results are shown below:
 ```
 beam size: 1, softmax temperature: 0.05 (default)
@@ -101,4 +142,4 @@ Josh decides to try flipping a house.  He buys a house for $80,000 and then puts
 James decides to run 3 sprints 3 times a week.  He runs 60 meters each sprint.  How many total meters does he run a week?||<<3*3=9>> <<9*60=540>> #### 540
 Every day, Wendi feeds each of her chickens three cups of mixed chicken feed, containing seeds, mealworms and vegetables to help keep them healthy.  She gives the chickens their feed in three separate meals. In the morning, she gives her flock of chickens 15 cups of feed.  In the afternoon, she gives her chickens another 25 cups of feed.  How many cups of feed does she need to give her chickens in the final meal of the day if the size of Wendi's flock is 20 chickens?||<<3*20=60>> <<60-15-25=20>> #### 20
 ```
-It is obvious in the visualization that the decision of components under these three settings is completely the same. This further proves that the decision of the best component is not significantly affected by the softmax temperature.
+It is obvious in the visualization that the decision of components under these three settings is completely the same. This further proves my assumption.
