@@ -159,6 +159,8 @@ def main():
         print (f'Val. PPL: {ppl}; Accuracy: {accuracy}; Token Accuracy: {token_accuracy}.')
         student.save_pretrained(os.path.join(args.save_model, 'student', f'checkpoint_{epoch}'))
         emulator.save_pretrained(os.path.join(args.save_model, 'emulator',  f'checkpoint_{epoch}'))
+        os.system(f"rm -rf {os.path.join(args.save_model,'student', f'checkpoint_{epoch-1}')}")
+        os.system(f"rm -rf {os.path.join(args.save_model,'emulator', f'checkpoint_{epoch-1}')}")
 
 
 if __name__ == "__main__":

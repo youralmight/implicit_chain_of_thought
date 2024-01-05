@@ -157,6 +157,7 @@ def main():
         accuracy, token_accuracy, ppl = evaluate(val_dataloader, tokenizer, ctx, teacher, args.max_new_tokens)
         print (f'Val. PPL: {ppl}; Accuracy: {accuracy}; Token Accuracy: {token_accuracy}.')
         teacher.save_pretrained(os.path.join(args.save_model, f'checkpoint_{epoch}'))
+        os.system(f"rm -rf {os.path.join(args.save_model, f'checkpoint_{epoch-1}')}")
 
 if __name__ == "__main__":
     main()

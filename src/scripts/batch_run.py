@@ -2,7 +2,7 @@ import os,argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--exp', type=str, required=True)
 args = parser.parse_args()
-epochs = [ 1, 5, 10, 20, 30]
+epochs = [1,5,10,30]
 duplicants = [1,2,3,4,5]
 exps = ["vanilla","diagnoal_double","concat","sum"]
 '''
@@ -39,7 +39,11 @@ for epoch in epochs:
             f"python src/train_mind_reading_student.py --train_path data/{data_str}/train.txt --val_path data/{data_str}/valid.txt --epochs {epoch} --lr 5e-5 --batch_size 32 --base_model gpt2 --teacher train_models/{exp_str}/gpt2/teacher/checkpoint_{epoch-1} --save_model train_models/{exp_str}/gpt2/student_initial --delta dynamic 2>&1 >generation_logs/{exp_str}/gpt2/student.txt",
             f"python src/train_thought_emulator.py --train_path data/{data_str}/train.txt --val_path data/{data_str}/valid.txt --epochs {epoch} --lr 5e-5 --batch_size 32 --base_model gpt2 --teacher train_models/{exp_str}/gpt2/teacher/checkpoint_{epoch-1} --save_model train_models/{exp_str}/gpt2/emulator_initial --delta dynamic --subset {exp_command_1_dict[args.exp]} --mixture_size 1 2>&1 >generation_logs/{exp_str}/gpt2/emulator.txt",
             f"python src/train_coupled_emulator_and_student.py --train_path data/{data_str}/train.txt --val_path data/{data_str}/valid.txt --epochs {epoch} --lr 5e-5 --batch_size 32 --student train_models/{exp_str}/gpt2/student_initial/checkpoint_{epoch-1} --emulator train_models/{exp_str}/gpt2/emulator_initial/checkpoint_{epoch-1} --save_model train_models/{exp_str}/gpt2/ 2>&1 >generation_logs/{exp_str}/gpt2/coupled.txt",
-            f"command rm -rf train_models/{exp_str}/gpt2/emulator_initial train_models/{exp_str}/gpt2/student_initial train_models/{exp_str}/gpt2/teacher"
+            f"mkdir -p saved_models/{exp_str}/gpt2/student",
+            f"mkdir -p saved_models/{exp_str}/gpt2/emulator",
+            f"cp -r train_models/{exp_str}/gpt2/student/checkpoint_{epoch-1} saved_models/{exp_str}/gpt2/student/checkpoint_{epoch-1}",
+            f"cp -r train_models/{exp_str}/gpt2/emulator/checkpoint_{epoch-1} saved_models/{exp_str}/gpt2/emulator/checkpoint_{epoch-1}",
+            f"command rm -rf train_models/{exp_str}/gpt2/student_initial train_models/{exp_str}/gpt2"
         ])
         # print(f" fish -c '{command}'")
         os.system(f" fish -c '{command}'")
