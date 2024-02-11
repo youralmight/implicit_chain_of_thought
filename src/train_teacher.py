@@ -102,12 +102,16 @@ def main():
     config = TeacherConfig(base_model=args.base_model)
     teacher = Teacher(config).to(device).to(ptdtype)
     last_epoch = None
-    for ckpt_id in [*reversed([*range(5)])]:
+    for ckpt_id in [*reversed([*range(args.epochs)])]:
         ckpt_dir = os.path.join(f"{args.save_model}",f"checkpoint_{ckpt_id}")
         if os.path.exists(ckpt_dir):
             last_epoch = ckpt_id
             break 
     if last_epoch is not None:
+        print(f"Loading from {ckpt_dir}")
+        print(f"Loading from {ckpt_dir}")
+        print(f"Loading from {ckpt_dir}")
+        print(f"Loading from {ckpt_dir}")
         teacher = Teacher.from_pretrained(ckpt_dir).to(device).to(ptdtype)
 
     # Load data

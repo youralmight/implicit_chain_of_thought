@@ -16,7 +16,7 @@ import sys
 import time
 import logging
 logging.basicConfig(level=getattr(logging, "INFO" if "LOG_LEVEL" not in os.environ else os.environ["LOG_LEVEL"]))
-epochs = [ 1, 5, 10, 20, 30]
+epochs = [ 1, 5, 10, 20, 30,35,50,75,100]
 dups = [1,2,3,4,5]
 
 exp_command_0_dict= {

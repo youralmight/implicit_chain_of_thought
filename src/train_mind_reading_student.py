@@ -107,7 +107,7 @@ def main():
     config = StudentConfig(base_model=args.base_model)
     student = Student(config).to(device).to(ptdtype)
     last_epoch = None
-    for ckpt_id in [*reversed([*range(5)])]:
+    for ckpt_id in [*reversed([*range(args.epochs)])]:
         ckpt_dir = os.path.join(f"{args.save_model}",f"checkpoint_{ckpt_id}")
         if os.path.exists(ckpt_dir):
             last_epoch = ckpt_id
