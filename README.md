@@ -66,21 +66,21 @@ Because their results are too close, I do not think we can conclude that one met
 
 #### 10k train samples
 
-| Method\Epochs | 20 |
+<!-- | Method\Epochs | 20 |
 | ------------- | ---------- |
 | Vanilla       | 70.4%        |
 | Sum           | 63.1%        |
 | Concatenate    | 56.1%      |
-| Alternating   | 53.6%      |
+| Alternating   | 53.6%      |-->
 
-<!-- | Method\Epochs | 20 | TODO |
+| Method\Epochs | 20 |  50 |
 | ------------- | ---------- | ---------- |
-| Vanilla       | 70.4%        | TODO        |
-| Sum           | 63.1%        | TODO        |
-| Concatenate    | 56.1%      | TODO      |
-| Alternating   | 53.6%      | TODO      | -->
+| Vanilla       | 70.4%        | 91.0%        |
+| Sum           | 63.1%        | 80.9%       |
+| Concatenate    | 56.1%      | 57.4%     |
+| Alternating   | 53.6%      |  51.8%     | 
 
-When the train set size scales to 10k, more training epochs are required to fine-tune a `GPT2` model. Therefore, I trained for 20 epochs in all training stages. In case the training is not stable and relies too much on randomness, I trained each method 4 times and report the average accuracy. The results are shown in the table above. As expected, `Vanilla` performs the best, and "Sum" follows because the former is most compatible and natural for the transformer architecture. The `Sum` requires the model to remember the reasoning process of both problems, which is more difficult than the `Vanilla` method. The "Concatenate" method disrupts the natural dimension of the model, which is not expected to perform well. The "Alternating" method is the worst because the alternating pattern is too hard for the model to learn."
+When the train set size scales to 10k and validation set size scales to 2k, more training epochs are required to fine-tune a `GPT2` model. Therefore, I trained for 20 epochs in all training stages with 4 times and report the average accuracy and 50 epochs in all training. The results are shown in the table above. As expected, `Vanilla` performs the best when trained 20 and 50 epochs, and "Sum" follows because the former is most compatible and natural for the transformer architecture. The `Sum` requires the model to remember the reasoning process of both problems, which is more difficult than the `Vanilla` method. The "Concatenate" method disrupts the natural dimension of the model, which is not expected to perform well. The "Alternating" method is the worst because the alternating pattern is too hard for the model to learn."
 <!-- Furthermore, the "Sum" method outperforms the other two methods, exhibiting 100% accuracy for both training epochs settings. This superior performance can be attributed to the "Sum" method's ability to effectively combine the teacher minds from the two different CoTs.
 
 The performance of all three methods is quite close. However, it is important to note that 2 x 2 multiplication is a relatively simple task for a `GPT2` model, which may explain the similar performance across the methods.
