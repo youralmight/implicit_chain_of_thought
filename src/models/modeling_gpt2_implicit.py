@@ -54,7 +54,8 @@ class GPT2ImplicitModel(GPT2Model):
             log_probs = log_probs / softmax_temperature
             # log_probs=torch.rand_like(log_probs)
             probs = log_probs.softmax(dim=-1)  # bsz, vocab
-            accu_prob = einops.rearrange(accu_prob, "B -> B 1") * probs
+            # accu_prob = einops.rearrange(accu_prob, "B -> B 1") * probs
+            accu_prob = einops.rearrange(accu_prob, "B -> B 1") + torch.log(probs)
 
             top_results = accu_prob.topk(beam_size, dim=-1)
             # mod_indices = top_results.indices % weight.shape[0]
@@ -452,7 +453,7 @@ class GPT2ImplicitModel(GPT2Model):
                                 "f_h_cs": [],
                                 "z": None,
                                 "zs": [],
-                                "accu_prob": torch.Tensor([1.0] * batch_size).to(
+                                "accu_prob": torch.Tensor([0.0] * batch_size).to(
                                     hidden_states.device
                                 ),
                                 "token_id_list": [[]] * batch_size,
