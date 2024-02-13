@@ -54,10 +54,10 @@ Add `--subset diagonal_double` to the command line at emulator training and use 
 ### Result and Analysis
 
 #### 800k train samples
-The table below presents the accuracy of the above methods trained with 800k train samples. The training epochs "3, 4, 6, 1" indicate the number of epochs for training the teacher, student, teacher, and student, respectively.
+The table below presents the accuracy of the above methods trained with 800k train samples. The training epochs "3, 4, 6, 1" indicate the number of epochs for training the teacher, emulator, student, and coupled model, respectively.
 | Method\Epochs | 3, 4, 6, 1 | 3, 2, 3, 1 |
 | ------------- | ---------- | ---------- |
-| Vanilla       | 1.0        | 1.0        |
+| Vanilla       | 100%        | 100%         |
 | Sum           | 100%        | 100%        |
 | Concatenate    | 99.7%      | 98.3%      |
 | Alternating   | 97.9      | 99.8%      |
@@ -94,6 +94,7 @@ Additionally, the "Alternating" method, while performing slightly worse than the
 Regarding the three steps in the inference process, it seems impossible to perform beam search in mind-reading. As for the generation process, it is originally autoregressive, which means it is hard to explore beam searches other than the original beam search. Therefore, I think "using hidden states to imitate beam search" refers to the mixture of components during thought emulation.
 
 In thought emulation, the model uses the mixture model, which is included in the emulator technically, to process the "Mind token" between the transformer layers of the language model. In this mixing process, one of the mixing components is chosen and fused with the intermediate hidden states. Because there exists the decision of choosing the best component, beam search can be applied to it.
+
 ### Method
 Because the mixture of components is designed for "Multi Reasoning Pathways" tasks, I only applied beam search to the `GSM8K` dataset and didn't apply it to the multiplication datasets. The emulation of beam search between the transformer layers is implemented in the commit `f31bae`. I will provide the results and analysis in the next section. Specifically, I select the beams with the highest accumulated log probabilities of the component paths and pass them to the next transformer layer. In the mixture process, I embed the component one-hot vectors and fuse them with the hidden states separately using an MLP, as stated in the paper. Furthermore, I kept the batching during inference to maintain parallelism and inference speed.
 
