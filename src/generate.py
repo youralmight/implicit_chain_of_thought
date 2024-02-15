@@ -107,6 +107,11 @@ def main():
     accuracy, throughput  = evaluate(test_dataloader, tokenizer, ctx, emulator, student, args.max_new_tokens)
     print (f"Test Accuracy: {accuracy}. Throughput: {throughput}")
 
+old_repr = torch.Tensor.__repr__
+def tensor_info(tensor):
+    line = repr(tensor.shape)[6:] + ' ' + repr(tensor.dtype)[6:] + '@' + str(tensor.device)
+    return line + '\n' + old_repr(tensor) + '\n' + line
+torch.Tensor.__repr__ = tensor_info
 
 if __name__ == "__main__":
     main()

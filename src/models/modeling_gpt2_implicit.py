@@ -234,6 +234,12 @@ class GPT2ImplicitModel(GPT2Model):
             batch_size = inputs_embeds.shape[0]
         else:
             raise ValueError("You have to specify either input_ids or inputs_embeds")
+        if "EMULATOR_BEAM_SIZE" in os.environ:
+            beam_size = int(os.environ["EMULATOR_BEAM_SIZE"])
+            tmp = list(input_shape)
+            tmp[-1]+=beam_size-1
+            input_shape = tuple(tmp)
+            input_ids = torch.nn.functional.pad(input_ids,[0,beam_size-1],mode='constant',value=input_ids[0][-1])
 
         # prepare device
         device = input_ids.device if input_ids is not None else inputs_embeds.device
@@ -257,13 +263,22 @@ class GPT2ImplicitModel(GPT2Model):
                 input_shape[-1] + past_length,
                 dtype=torch.long,
                 device=device,
-            )
+            ).repeat(batch_size,1)
             position_ids = position_ids.unsqueeze(0).view(-1, input_shape[-1])
+            if "EMULATOR_BEAM_SIZE" in os.environ and mode == "forward_emulator":
+                beam_size = int(os.environ["EMULATOR_BEAM_SIZE"])
+                for batch_id in range(input_shape[0]):
+                    position_ids[batch_id, positions_to_take[batch_id]:positions_to_take[batch_id]+beam_size] = position_ids[batch_id, positions_to_take[batch_id]]
+
 
         # GPT2Attention mask.
+        if "EMULATOR_BEAM_SIZE" in os.environ and mode == "forward_emulator" and attention_mask is None:
+            pass
+            # attention_mask = torch.ones(input_shape, device=device)
+            # for batch_id in range(input_shape[0]):
+
+
         if attention_mask is not None:
-            if "EMULATOR_BEAM_SIZE" not in os.environ and mode == "forward_emulator":
-                raise NotImplementedError  # I haven't understand these codes yet
             if batch_size <= 0:
                 raise ValueError("batch_size has to be defined and > 0")
             attention_mask = attention_mask.view(batch_size, -1)
@@ -322,7 +337,7 @@ class GPT2ImplicitModel(GPT2Model):
         # output some warning message about training settings
         if self.gradient_checkpointing and self.training:
             if use_cache:
-                logger.warning_once(
+                logger.warning_once( # pylint: disable=undefined-variable
                     "`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`..."
                 )
                 use_cache = False
@@ -920,7 +935,7 @@ class GPT2LMHeadImplicitModel(GPT2LMHeadModel):
             shift_logits = lm_logits[..., :-1, :].contiguous()
             shift_labels = labels[..., 1:].contiguous()
             # Flatten the tokens
-            loss_fct = CrossEntropyLoss()
+            loss_fct = CrossEntropyLoss()# pylint: disable=undefined-variable
             loss = loss_fct(
                 shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1)
             )
